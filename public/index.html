@@ -31,10 +31,20 @@
           />
         </div>
         <div class="form-control">
-          <label for="room">Room</label>
-          <select name="room" id="room">
-            <!-- Options will be populated by JavaScript -->
+          <label for="room-option">Room Option</label>
+          <select name="room-option" id="room-option">
+            <option value="existing-room">Join Existing Room</option>
+            <option value="create-new">Create New Room</option>
           </select>
+        </div>
+        <div class="form-control" id="existing-room-container">
+          <label for="room-code">Room Code</label>
+          <input
+            type="text"
+            name="room-code"
+            id="room-code"
+            placeholder="Enter room code..."
+          />
         </div>
         <div class="form-control" id="new-room-container" style="display:none;">
           <label for="new-room">New Room Name</label>
@@ -53,31 +63,19 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const joinForm = document.getElementById('join-form');
-    const roomSelect = document.getElementById('room');
+    const roomOption = document.getElementById('room-option');
+    const existingRoomContainer = document.getElementById('existing-room-container');
     const newRoomContainer = document.getElementById('new-room-container');
     const newRoomInput = document.getElementById('new-room');
+    const roomCodeInput = document.getElementById('room-code');
 
-    // Fetch predefined rooms from the server
-    fetch('/rooms')
-      .then(response => response.json())
-      .then(rooms => {
-        rooms.forEach(room => {
-          const option = document.createElement('option');
-          option.value = room;
-          option.textContent = room;
-          roomSelect.appendChild(option);
-        });
-        const createNewOption = document.createElement('option');
-        createNewOption.value = 'create-new';
-        createNewOption.textContent = 'Create New Room';
-        roomSelect.appendChild(createNewOption);
-      });
-
-    roomSelect.addEventListener('change', function () {
-      if (roomSelect.value === 'create-new') {
+    roomOption.addEventListener('change', function () {
+      if (roomOption.value === 'create-new') {
         newRoomContainer.style.display = 'block';
+        existingRoomContainer.style.display = 'none';
       } else {
         newRoomContainer.style.display = 'none';
+        existingRoomContainer.style.display = 'block';
       }
     });
 
@@ -85,27 +83,31 @@
       e.preventDefault();
 
       const username = document.getElementById('username').value;
-      let room = roomSelect.value;
-
-      if (room === 'create-new') {
-        room = newRoomInput.value.trim();
+      if (roomOption.value === 'create-new') {
+        const room = newRoomInput.value.trim();
         if (room === '') {
           alert('Please enter a room name');
           return;
         }
         console.log(`Creating new room: ${room}`);
-        socket.emit('createRoom', room, (error) => {
+        socket.emit('createRoom', room, (error, roomCode) => {
           if (error) {
             alert(error);
             console.log(`Error creating room: ${error}`);
             return;
           }
-          console.log(`Room created successfully: ${room}`);
-          window.location.href = `chat.html?username=${username}&room=${room}`;
+          console.log(`Room created successfully: ${room} with code ${roomCode}`);
+          alert(`Room created successfully! Share this code with your friends: ${roomCode}`);
+          window.location.href = `chat.html?username=${username}&roomCode=${roomCode}`;
         });
       } else {
-        console.log(`Joining existing room: ${room}`);
-        window.location.href = `chat.html?username=${username}&room=${room}`;
+        const roomCode = roomCodeInput.value.trim();
+        if (roomCode === '') {
+          alert('Please enter a room code');
+          return;
+        }
+        console.log(`Joining existing room with code: ${roomCode}`);
+        window.location.href = `chat.html?username=${username}&roomCode=${roomCode}`;
       }
     });
 

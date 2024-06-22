@@ -37,8 +37,13 @@ const rooms = {};
 
 // Add predefined rooms to the rooms object
 predefinedRooms.forEach(room => {
-  rooms[room] = { users: [] };
+  rooms[room] = { users: [], code: room }; // Assign the room name as the code for predefined rooms
 });
+
+// Function to generate a unique room code
+function generateRoomCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
 
 (async () => {
   pubClient = createClient({ url: "redis://127.0.0.1:6379" });
@@ -59,17 +64,19 @@ io.on("connection", (socket) => {
   socket.on("createRoom", (room, callback) => {
     console.log(`Create room request received for room: ${room}`);
     if (!rooms[room]) {
-      rooms[room] = { users: [] };
-      console.log(`Room created: ${room}`);
-      callback(); // No error, room created
+      const roomCode = generateRoomCode();
+      rooms[room] = { users: [], code: roomCode };
+      console.log(`Room created: ${room} with code ${roomCode}`);
+      callback(null, roomCode); // Pass the room code to the callback
     } else {
       console.log(`Room already exists: ${room}`);
       callback("Room already exists");
     }
   });
 
-  socket.on("joinRoom", ({ username, room }) => {
-    if (rooms[room]) {
+  socket.on("joinRoom", ({ username, roomCode }) => {
+    const room = Object.keys(rooms).find(key => rooms[key].code === roomCode);
+    if (room) {
       const user = userJoin(socket.id, username, room);
       socket.join(user.room);
       rooms[room].users.push(user);
