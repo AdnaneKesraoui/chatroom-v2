@@ -11,9 +11,14 @@ const RoomSchema = new mongoose.Schema({
     unique: true,
   },
   createdBy: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true,
   },
+  users: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  }],
 });
 
 module.exports = mongoose.model('Room', RoomSchema);

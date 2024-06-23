@@ -3,28 +3,29 @@ const mongoose = require('mongoose');
 const MessageSchema = new mongoose.Schema({
   username: {
     type: String,
-    required: true,
+    required: true
   },
   text: {
     type: String,
-    required: true,
+    required: true
   },
   time: {
-    type: String,
-    required: true,
+    type: Date,
+    default: Date.now
   },
   room: {
     type: String,
-    required: true,
+    required: true
   },
   sentiment: {
     type: String,
-    required: true,
+    enum: ['positive', 'negative', 'neutral'],
+    default: 'neutral'
   },
   emoji: {
     type: String,
-    required: true,
-  },
+    default: '😐'
+  }
 });
 
 module.exports = mongoose.model('Message', MessageSchema);
